@@ -1,0 +1,9 @@
+{
+    "name": "grenade-yeet",
+    "version": "1.0.0",
+    "title": "Grenade Yeet",
+    "author": "haselkern",
+    "factorio_version": "1.1",
+    "dependencies": ["base >= 1.1"],
+    "description": "Instead of placing grenades and other explosives on the ground, inserters will yeet them into the distance."
+}
