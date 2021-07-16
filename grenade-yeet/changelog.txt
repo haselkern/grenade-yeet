@@ -1,5 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.0
+  Changed:
+    - Stacks will now be thrown in a grid
+    - Distance now depends on rotation speed and inserter arm length.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.0
 Date: 2021.07.13

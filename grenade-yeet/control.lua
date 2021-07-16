@@ -19,8 +19,7 @@ function process_inserter(surface, inserter)
         if yeetable[held.name] then
 
             -- Find out if and in what direction the inserter should yeet
-            local yeet_x = 0
-            local yeet_y = 0
+            local yeet_x, yeet_y = 0, 0
 
             if inserter.direction == defines.direction.north and held_position.y >= inserter.position.y then
                 -- Inserter yeets from north to south
@@ -49,19 +48,22 @@ function process_inserter(surface, inserter)
                 yeet_y = yeet_y * throw_distance
 
                 -- Spawn an entity for each thing in the inserter's hand
+                local stack_size = held.count
                 while held.count > 0 do
+                    -- Create an offset in a stack of things.
+                    local offset_x, offset_y = util.target_offset(held.count, stack_size, 2)
+
                     surface.create_entity {
                         name = held.name,
                         position = held_position,
-                        target = {held_position.x + yeet_x, held_position.y + yeet_y},
+                        target = {
+                            held_position.x + yeet_x + offset_x,
+                            held_position.y + yeet_y + offset_y
+                        },
                         speed = speed,
                     }
 
                     held.count = held.count - 1
-                    -- Add a bit of variation for a nicer effect when throwing large stacks
-                    yeet_x = yeet_x * 1.02
-                    yeet_y = yeet_y * 1.02
-                    speed = speed * 0.99
                 end
 
                 -- We have spawned everything, clear the inserter's hand
