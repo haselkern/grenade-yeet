@@ -1,3 +1,5 @@
+local util = require("util")
+
 local yeetable = {
     ["grenade"] = true,
     ["cluster-grenade"] = true,
@@ -37,12 +39,14 @@ function process_inserter(surface, inserter)
 
             if yeet_x ~= 0 or yeet_y ~= 0 then
 
-                local distance = inserter.prototype.inserter_rotation_speed * 400
+                -- throw distance is a product of rotation speed, arm length and a constant.
+                local arm_length = util.distance(inserter.position, held_position)
+                local throw_distance = inserter.prototype.inserter_rotation_speed * arm_length * 250
                 local speed = 0.3
 
-                -- Multiply by distance is safe, since yeet_x/y is a unit vec
-                yeet_x = yeet_x * distance
-                yeet_y = yeet_y * distance
+                -- Multiply by throw_distance is safe, since yeet_x/y is a unit vec
+                yeet_x = yeet_x * throw_distance
+                yeet_y = yeet_y * throw_distance
 
                 -- Spawn an entity for each thing in the inserter's hand
                 while held.count > 0 do
