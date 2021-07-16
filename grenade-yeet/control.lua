@@ -1,15 +1,8 @@
--- We populate a list of all yeetable items in on_load.
--- This allows us to detect other mods and make their items yeetable too!
-local yeetable = {}
-
-script.on_load(
-    function(event)
-        -- Base game
-        yeetable["grenade"] = true
-        yeetable["cluster-grenade"] = true
-        yeetable["cliff-explosives"] = true
-    end
-)
+local yeetable = {
+    ["grenade"] = true,
+    ["cluster-grenade"] = true,
+    ["cliff-explosives"] = true,
+}
 
 -- Process a single inserter.
 -- surface is required for spawning new things.
