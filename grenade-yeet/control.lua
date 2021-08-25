@@ -1,4 +1,12 @@
 local util = require("util")
+remote.add_interface("yeet-interface", {
+    list = function()
+      for num, obj in pairs(global.yeeters) do
+        game.player.print(num .."--".. obj.name.."--"..obj.type)
+      end
+    end
+  }
+)
 
 local yeetable = {
     ["grenade"] = true,
@@ -6,9 +14,71 @@ local yeetable = {
     ["cliff-explosives"] = true,
 }
 
+function remove_yeeter(inserter)
+    if global.yeeters[inserter.unit_number] ~= nil then
+      log("Removing "..inserter.unit_number.." from yeeters")
+      global.yeeters[inserter.unit_number] = nil
+    end
+end
+
+function handle_possible_yeeter(inserter)
+  if (not global.yeeters) then
+    global.yeeters = {}
+  end
+
+  if next(inserter.surface.find_entities_filtered {position = inserter.drop_position}) == nil then
+    if global.yeeters[inserter.unit_number] == nil then
+      log("Adding "..inserter.unit_number.." to yeeters")
+      global.yeeters[inserter.unit_number] = inserter
+    end
+      remove_yeeter(inserter)
+  else
+  end
+end
+
+
+-- Changes to  entities can both be inserters and give/remove drop targets
+-- so we just process all the inserters in the long inserter range
+function find_yeeters(surface, position)
+    local near_inserters = surface.find_entities_filtered {
+      position = position,
+      radius=2,
+      type = "inserter"
+    }
+    for _, inserter in pairs(near_inserters) do
+      log("processing inserter:"..inserter.unit_number)
+      handle_possible_yeeter(inserter)
+    end
+end
+
+
+-- Entities still exist as potential drop targets on the
+-- tick they are mined/destroyed so we wait a tick to process
+function find_next_tick(position)
+  if global.yeet_searches == nil then
+    global.yeet_searches = {}
+  end
+  table.insert(global.yeet_searches, position)
+end
+
+
+
+function handle_entity_removal(entity)
+    if entity.unit_number ~= nil then
+      if entity.type == "inserter" then
+        remove_yeeter(entity)
+      end
+      find_next_tick(entity.position)
+    end
+end
+
+
 -- Process a single inserter.
 -- surface is required for spawning new things.
-function process_inserter(surface, inserter)
+function process_inserter(inserter)
+    if not inserter.valid then
+      return
+    end
     local held = inserter.held_stack
 
     -- Only do stuff if the inserter is holding something and has no place to put items.
@@ -73,20 +143,56 @@ function process_inserter(surface, inserter)
     end
 end
 
--- Process a surface.
--- This will look for all inserters and process them.
-function process_surface(surface)
-    local inserters = surface.find_entities_filtered {type = "inserter"}
-    for _, inserter in pairs(inserters) do
-        process_inserter(surface, inserter)
-    end
-end
+script.on_event(defines.events.on_built_entity,
+  function(event)
+    find_yeeters(event.created_entity.surface, event.created_entity.position)
+  end
+)
+script.on_event(defines.events.on_entity_died,
+  function(event) handle_entity_removal(event.entity) end
+)
 
--- Process all surfaces each tick
-script.on_event(defines.events.on_tick,
-    function(event)
-        for _, surface in pairs(game.surfaces) do
-            process_surface(surface)
-        end
+script.on_event(defines.events.on_player_mined_entity,
+  function(event) handle_entity_removal(event.entity) end
+)
+
+script.on_event(defines.events.on_player_rotated_entity,
+  function(event)
+    if event.entity.unit_number ~= nil and  event.entity.type == "inserter" then
+      -- Rotating can only affect this inserters yeeter elligibility
+      handle_possible_yeeter(event.entity)
     end
+  end
+)
+script.on_event(defines.events.on_tick,
+  function(event)
+    if global.yeet_searches == nil then
+      global.yeet_searches = {}
+    end
+
+    for _, position in pairs(global.yeet_searches) do
+      log("doing search on"..position.x.." "..position.y)
+      find_yeeters(game.surfaces[1], position)
+    end
+    global.yeet_searches = {}
+
+    if global.yeeters == nil then
+      global.yeeters = {}
+    end
+    for num, inserter in pairs(global.yeeters) do
+      process_inserter(inserter)
+    end
+  end
+)
+
+script.on_configuration_changed(
+  function()
+    if global.yeeters == nil then
+      global.yeeters = {}
+    end
+    inserters = game.surfaces[1].find_entities_filtered {type = "inserter"}
+    for _, inserter in pairs(inserters) do
+      handle_possible_yeeter(inserter)
+    end
+  end
 )
