@@ -4,6 +4,10 @@ A mod for [Factorio](https://factorio.com/). Instead of placing grenades and oth
 
 The code for the mod inside the `grenade-yeet` folder is only around 100 lines including lots of comments. It should be easy to understand for beginners, which includes myself as this is my first Factorio mod.
 
+## TODO
+
+* Currently only grenades, cluster grenades and cliff explosives can be thrown. Ideally all things like nukes and capsules would be supported.
+
 ---
 
 When creating a new release you have to bump the version number in `info.json`, write a changelog in `changelog.txt` and then run `make` to build a zip file that is ready for upload. This requires [jq](https://stedolan.github.io/jq/) to be installed. Make sure to test the zip once before uploading!
