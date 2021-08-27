@@ -1,4 +1,7 @@
 local util = require("util")
+
+-- Debug function to print current global.yeeters
+-- called via `remote.call("yeet-interface", "list")`
 remote.add_interface("yeet-interface", {
     list = function()
         for num, obj in pairs(global.yeeters) do
@@ -13,6 +16,7 @@ local yeetable = {
     ["cliff-explosives"] = true
 }
 
+-- Remove an inserter from global.yeeters if it is there
 local function remove_yeeter(inserter)
     if global.yeeters[inserter.unit_number] ~= nil then
         log("Removing " .. inserter.unit_number .. " from yeeters")
@@ -20,6 +24,8 @@ local function remove_yeeter(inserter)
     end
 end
 
+
+-- Check if this inserter is a yeeter and add/remove it from global.yeeters
 local function handle_possible_yeeter(inserter)
     if (not global.yeeters) then global.yeeters = {} end
 
@@ -138,15 +144,23 @@ local function process_inserter(inserter)
     end
 end
 
+
+-- ============================= Check for any changes to what is a yeeter =========================
+
+-- Check if a created entity has affected whether any inserters are yeeters
 script.on_event(defines.events.on_built_entity, function(event)
     find_yeeters(event.created_entity.surface, event.created_entity.position)
 end)
+
+-- Check if a removed (by death) entity has affected whether any inserters are yeeters
 script.on_event(defines.events.on_entity_died,
                 function(event) handle_entity_removal(event.entity) end)
 
+-- Check if a removed (by mining) entity has affected whether any inserters are yeeters
 script.on_event(defines.events.on_player_mined_entity,
                 function(event) handle_entity_removal(event.entity) end)
 
+-- Check if a rotated inserter has become or is no longer a yeeter
 script.on_event(defines.events.on_player_rotated_entity, function(event)
     if event.entity.unit_number ~= nil and event.entity.type == "inserter" then
         -- Rotating can only affect this inserters yeeter elligibility
@@ -154,6 +168,10 @@ script.on_event(defines.events.on_player_rotated_entity, function(event)
     end
 end)
 
+
+-- =========================== Per tick processing ================================================
+
+-- Search possible yeeter change locations from the last tick and process known yeeters
 script.on_event(defines.events.on_tick, function(_)
     if global.yeet_searches == nil then global.yeet_searches = {} end
 
@@ -167,6 +185,7 @@ script.on_event(defines.events.on_tick, function(_)
     for _, inserter in pairs(global.yeeters) do process_inserter(inserter) end
 end)
 
+-- Find all the yeeting insterters on the map when the config changes
 script.on_configuration_changed(function()
     if global.yeeters == nil then global.yeeters = {} end
     local inserters = game.surfaces[1].find_entities_filtered {type = "inserter"}
